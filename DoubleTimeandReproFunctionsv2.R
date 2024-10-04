@@ -5,7 +5,10 @@
 #     3) a version to fit to deterministic models for testing or rate data
 #     4) the Max likelihood estimator for beta-binomial model 
 #     5) Beta-binomial simulator
-#
+#     6) gamTVRpred a function that calculates the time varying reproduction number
+#     7) simulator function for SIS infection
+#     8) simulator function for SEIR infection
+#     9) wrapper function for post processing simulations with gamTVRpred
 
 ##################
 ## function for running GAM and creating plots
