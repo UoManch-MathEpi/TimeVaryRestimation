@@ -5,7 +5,7 @@ date: "2024-07-16"
 output: html_document
 ---
 
-This file creates the figures from Pang *et al* 2024 (subject to random seed). 
+This file creates the figures from Pang *et al* 2024 [Pang](https://www.medrxiv.org/content/10.1101/2024.03.26.24304928v1) (subject to random seed). 
 
 # Setting up 
 
@@ -14,9 +14,9 @@ Firstly load packages, bespoke functions and datasets (pcr holds case data while
 source('DoubleTimeandReproFunctionsv2.R')
 
 pcr=data.frame(read.csv('Case_Numbers.csv'))
-out=data.frame(read.csv('carehome.csv'))
+out=data.frame(read.csv('Carehome_Outbreaks.csv'))
 
-sis <- data.frame(t=18321+31+out$t, x=out$x)
+sis <- data.frame(t=out$t, x=out$x)
 ```
 
 
@@ -301,18 +301,30 @@ print(p1+p2+plot_layout(ncol=2))
 
 # Supplementary Material: R estimation from Mortality data
 ```{r}
-SimDat <- seir_tau_tv(MaxTime=10*400,dt=1/10, repro=2*log(2),sig=1/3, gam= 1/5, N0=10^5, I0=10,E0=0, 
+incubation <- 3
+infecitous <- 5
+SimDat <- seir_tau_tv(MaxTime=10*400,dt=1/10, repro=2*log(2),sig=1/incubation, gam= 1/infecitous, N0=10^5, I0=10,E0=0, 
                        itp=1, frac=1, plt1 = T, plt2 = T )
 SimDeath <- rbinom(400, prob=0.1, size=diff(SimDat$R[seq(1,4001, 10)]))
 PredMort <- gamTVRpred(cbind(18350+1:400, SimDeath))
 ```
 
 ```{r}
-par(mfrow=c(2,2))
-plot(PredMort$sdt, main='First derivative of spline', ylab='', xlab='Time')
-plot(PredMort$sdt2, main='Second derivative of spline', ylab='', xlab='Time')
-plot(PredMort$sdt3, main='Third derivative of spline', ylab='', xlab='Time')
+PredMort$REdeath <- 1+infecitous*incubation*PredMort$sdt2+infecitous*incubation*PredMort$sdt^2+(incubation+infecitous)*PredMort$sdt
 
-plot(PredMort$time, 1+5*3*PredMort$sdt2+5*3*PredMort$sdt^2+(3+5)*PredMort$sdt, main='R estimate from death data', type='l', ylim=c(0,2), ylab='RE', xlab='Time')
-abline(h=2*log(2))
+    p1 <- ggplot(data=PredMort, aes(x=time, y=sdt))+
+      geom_line(color='darkblue') +
+      labs(x='Date',y='R_E', title='First derivative of spline')
+    p2 <- ggplot(data=PredMort, aes(x=time, y=sdt2))+
+      geom_line(color='darkblue') +
+      labs(x='Date',y='R_E', title='Second derivative of spline')
+    p3 <- ggplot(data=PredMort, aes(x=time, y=sdt3))+
+      geom_line(color='darkblue') +
+      labs(x='Date',y='R_E', title='Third derivative of spline')
+    p4 <- ggplot(data=PredMort, aes(x=time, y=REdeath))+
+      geom_line(color='darkblue') +
+      labs(x='Date',y='R_E', title='R_E estimate from death data')
+
+      print(p1+p2+p3+p4+plot_layout(ncol=2))
+
 ```
