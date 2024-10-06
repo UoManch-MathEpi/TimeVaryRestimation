@@ -432,8 +432,8 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
   nt <- res$time
   Xp=predict(GAM,newdata=data.frame(time=nt,weekday="Friday"),type="lpmatrix")  #[1:(knot-1)+7]
   res$meanspline <- as.numeric(Xp%*%coef(GAM))+sum(coef(GAM)[2:7])/7
-  # and infer cheap CI (but with unconditional variance).
-  dfsd <- rowSums(Xp%*%GAM$Vc*Xp)^.5 ## cheap diag(Xi%*%b$Vp%*%t(Xi))^.5
+  # and infer cheap CI (but with unconditional variance), taken and adapted from Wood textbook.
+  dfsd <- rowSums(Xp%*%GAM$Vc*Xp)^.5 ## 
   res$dfse <- dfsd
   res$msup <- res$meanspline+zv*dfsd
   res$mslow <- res$meanspline-zv*dfsd
@@ -449,24 +449,25 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
   res$predULup <- exp(res$msup)
   res$predULlow <- exp(res$mslow)
   # then check for non-linearity issues (noting this is more computationally intensive)
+  # again code taken from Wood textbook
   betasim <- mvrnorm(10000,coef(GAM),vcov(GAM, unconditional=TRUE))
   qntsim <- apply(exp(Xp %*% t(betasim)), 1, quantile, probs=c(0.025, 0.975))
   res$predUNLup <- qntsim[2,]*exp(sum(coef(GAM)[2:7])/7)
   res$predUNLlow <- qntsim[1,]*exp(sum(coef(GAM)[2:7])/7)
 
   # then calcuate the derivative for double time calcs
+  # finite difference derivative code adapted from mgcv help pages
   eps <- 1e-3 ## finite difference interval
   X1 <- predict(GAM, data.frame(time=nt+eps,weekday="Friday"),type="lpmatrix")
   Xdp <- (X1-Xp)/eps ## maps coefficients to (fd approx.) derivatives
 
-  newd <- data.frame(time=nt+2*eps,weekday="Friday") # data.frame(Tv=xv, DW=DW)
+  newd <- data.frame(time=nt+2*eps,weekday="Friday") #
   X2 <- predict(GAM, newd,type="lpmatrix")
-  Xdp2 <-  (Xp-2*X1+X2)/eps^2 ## maps coefficients to (fd approx.) derivatives
-  newd <- data.frame(time=nt+3*eps,weekday="Friday") # data.frame(Tv=xv, DW=DW)
+  Xdp2 <-  (Xp-2*X1+X2)/eps^2 #
+  newd <- data.frame(time=nt+3*eps,weekday="Friday") # 
   X3 <- predict(GAM, newd,type="lpmatrix")
-  Xdp3 <-  (X3-3*X2+3*X1-Xp)/eps^3 ## maps coefficients to (fd approx.) derivatives
-  # Xdp2 <- ((Xdp2-Xdp)/eps)
-  #  Xdp <- (X1-Xp)/eps ## maps coefficients to (fd approx.) derivatives
+  Xdp3 <-  (X3-3*X2+3*X1-Xp)/eps^3 #
+
   Xi <- Xdp*0 
   Xi[,1:(knot-1)+7] <- Xdp[,1:(knot-1)+7] ## Xi%*%coef(MGAM) = smooth deriv i
   Xi2 <- Xdp2*0 
@@ -478,18 +479,6 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
   df2 <- Xi2%*%coef(GAM)              ## ith smooth derivative 
   df2sd <- rowSums(Xi2%*%GAM$Vp*Xi2)^.5 ## cheap diag(Xi%*%b$Vp%*%t(Xi))^.5
   df3 <- Xi3%*%coef(GAM)              ## ith smooth derivative 
-  
-#  res$sdt <- df
- # res$sdtup <- df+2*df.sd
-  #res$sdtlow <- df-2*df.sd
-  #res$time <- as.Date(xv, origin = "1899-12-30")
-  # CI is approximate.
-  
-#  Xi <- Xdp*0
- # Xi[,1:(knot-1)+7] <- Xdp[,1:(knot-1)+7] ## Xi%*%coef(MGAM) = smooth deriv i
-  #df <- Xi%*%coef(GAM)              ## ith smooth derivative
-  
-#  dfsd <- rowSums(Xi%*%GAM$Vc*Xi)^.5 ## cheap diag(Xi%*%b$Vp%*%t(Xi))^.5
   
   res$sdt <- df
   res$sdtup <- df+zv*dfsd
@@ -536,40 +525,41 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
   qntsim <- apply(bootsimfine, 1, quantile, probs=c(0.025, 0.975))
   # this runs ok speed wise with all samples but taking a subset of the sample may be faster if debugging/testing
   sampboot <- sample(1:10000, 10000, replace=FALSE) #1:10000 #
-  wdmean <- mean(exp(apply(betasim[sampboot, 2:7], 1, sum)/7))
+# wdmean <- mean(exp(apply(betasim[sampboot, 2:7], 1, sum)/7))
 
-  # use the trapesuim rule to approximate integrals [this is the slow bit if nv is large, or sample size in sampboot large]
+  # use the trapesuim rule to approximate integrals 
+  # [this is the slow bit if nv is large, or sample size in sampboot large]
     Fvalboot <- bootsim[, sampboot]*exp(gamma*(nt))
-  Fvalgradboot <-  bootsimfine[,sampboot]*exp(gamma*(ntv)) #sum(coef(GAM)[2:7])/7+
+  Fvalgradboot <-  bootsimfine[,sampboot]*exp(gamma*(ntv)) 
   Fvalgradbootsum <- dt*apply(Fvalgradboot,2,cumsum)[1+nv*0:(length(nt)-1),]-
     dt/2*(Fvalgradboot[1+nv*0:(length(nt)-1),]+Fvalgradboot[1])
   Fintboot <- Fvalboot/(I0*exp(-sum(coef(GAM)[2:7])/7)+Fvalgradbootsum)/gamma
   qntsimfullint <- apply(Fintboot, 1, quantile, probs=c(0.025,0.5, 0.975))
   
   # redundant code but useful comparison of 'wrong' appraoch
-  Fvalgrad <- exp(as.numeric(xptrap%*%coef(GAM))+sum(coef(GAM)[2:7])/7+gamma*(ntv))
-  Fvalgradup <- qntsim[2,]*exp(sum(coef(GAM)[2:7])/7+gamma*(ntv))
-  Fvalgradlow <- qntsim[1,]*exp(sum(coef(GAM)[2:7])/7+gamma*(ntv))
-  Fvalgradsum = dt*(cumsum(Fvalgrad)) # -Fvalgrad[1]/2)
-  Fvalgradsumup = dt*(cumsum(Fvalgradup)) # -Fvalgrad[1]/2)
-  Fvalgradsumlow = dt*(cumsum(Fvalgradlow)) # -Fvalgrad[1]/2)
-  Fint = I0+Fvalgradsum[1+nv*0:(length(Incid)-1)]-dt*(Fvalgrad[1+nv*0:(length(Incid)-1)]+Fvalgrad[1])/2
-  Fintup = I0+Fvalgradsumup[1+nv*0:(length(Incid)-1)]-dt*(Fvalgradup[1+nv*0:(length(Incid)-1)]+Fvalgradup[1])/2
-  Fintlow = I0+Fvalgradsumlow[1+nv*0:(length(Incid)-1)]-dt*(Fvalgradlow[1+nv*0:(length(Incid)-1)]+Fvalgradlow[1])/2
+#  Fvalgrad <- exp(as.numeric(xptrap%*%coef(GAM))+sum(coef(GAM)[2:7])/7+gamma*(ntv))
+#  Fvalgradup <- qntsim[2,]*exp(sum(coef(GAM)[2:7])/7+gamma*(ntv))
+#  Fvalgradlow <- qntsim[1,]*exp(sum(coef(GAM)[2:7])/7+gamma*(ntv))
+#  Fvalgradsum = dt*(cumsum(Fvalgrad)) 
+#  Fvalgradsumup = dt*(cumsum(Fvalgradup)) 
+#  Fvalgradsumlow = dt*(cumsum(Fvalgradlow)) 
+#  Fint = I0+Fvalgradsum[1+nv*0:(length(Incid)-1)]-dt*(Fvalgrad[1+nv*0:(length(Incid)-1)]+Fvalgrad[1])/2
+#  Fintup = I0+Fvalgradsumup[1+nv*0:(length(Incid)-1)]-dt*(Fvalgradup[1+nv*0:(length(Incid)-1)]+Fvalgradup[1])/2
+#  Fintlow = I0+Fvalgradsumlow[1+nv*0:(length(Incid)-1)]-dt*(Fvalgradlow[1+nv*0:(length(Incid)-1)]+Fvalgradlow[1])/2
   
   if(type=='SEIR' || type=='SEIRWeek'){
     alpha <- 1/para[4]
 
     # now merge to estimator for RE
-    alpha <- 1/para[4]
     res$REfulllow <- qntsimfullint[1,]*(1+res$sdtlow/alpha)
     res$REfullmed <- qntsimfullint[2,]*(1+res$sdt/alpha)
     res$REfullup <- qntsimfullint[3,]*(1+res$sdtup/alpha)
-    res$RE <- Incid/Fint/gamma*(1+res$sdt/alpha)
-    res$REup <- Incidup/Fintlow/gamma*(1+res$sdtup/alpha)
-    res$RElow <- Incidlow/Fintup/gamma*(1+res$sdtlow/alpha)
+ #   res$RE <- Incid/Fint/gamma*(1+res$sdt/alpha)
+#    res$REup <- Incidup/Fintlow/gamma*(1+res$sdtup/alpha)
+#    res$RElow <- Incidlow/Fintup/gamma*(1+res$sdtlow/alpha)
 
-    # use the trapesuim rule to approximate integrals [this is the slow bit if nv is large, or sample size in sampboot large]
+    # use the trapesuim rule to approximate integrals 
+    # [this is the slow bit if nv is large, or sample size in sampboot large]
     Gvalboot <- bootsim[, sampboot]
     Gvalgradboot <-  bootsimfine[,sampboot] #sum(coef(GAM)[2:7])/7+
     Gvalgradbootsum <- dt*apply(Gvalgradboot,2,cumsum)[1+nv*0:(length(nt)-1),]-
@@ -579,30 +569,34 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
     RCqntsimfullint <- apply(Fintboot/(1-Gvalboot/N/alpha-Gintboot/N), 1, quantile, probs=c(0.025,0.5, 0.975))
     RCqntsimfullint <- ifelse(RCqntsimfullint<0, 0, RCqntsimfullint)
     # again redundant code which could be removed
-    Gvalgrad <- exp(as.numeric(xptrap%*%coef(GAM))+sum(coef(GAM)[2:7])/7)
-    Gvalgradup <- qntsim[2,]*exp(sum(coef(GAM)[2:7])/7)
-    Gvalgradlow <- qntsim[1,]*exp(sum(coef(GAM)[2:7])/7)
-    Gvalgradsum = dt*(cumsum(Gvalgrad)) 
-    Gvalgradsumup = dt*(cumsum(Gvalgradup)) 
-    Gvalgradsumlow = dt*(cumsum(Gvalgradlow))
-    Gint = I0+Gvalgradsum[1+nv*0:(length(Incid)-1)]-dt*(Gvalgrad[1+nv*0:(length(Incid)-1)]+Gvalgrad[1])/2
-    Gintup = I0+Gvalgradsumup[1+nv*0:(length(Incid)-1)]-dt*(Gvalgradup[1+nv*0:(length(Incid)-1)]+Gvalgradup[1])/2
-    Gintlow = I0+Gvalgradsumlow[1+nv*0:(length(Incid)-1)]-dt*(Gvalgradlow[1+nv*0:(length(Incid)-1)]+Gvalgradlow[1])/2
+#    Gvalgrad <- exp(as.numeric(xptrap%*%coef(GAM))+sum(coef(GAM)[2:7])/7)
+#    Gvalgradup <- qntsim[2,]*exp(sum(coef(GAM)[2:7])/7)
+#    Gvalgradlow <- qntsim[1,]*exp(sum(coef(GAM)[2:7])/7)
+#    Gvalgradsum = dt*(cumsum(Gvalgrad)) 
+#    Gvalgradsumup = dt*(cumsum(Gvalgradup)) 
+#    Gvalgradsumlow = dt*(cumsum(Gvalgradlow))
+#    Gint = I0+Gvalgradsum[1+nv*0:(length(Incid)-1)]-dt*(Gvalgrad[1+nv*0:(length(Incid)-1)]+Gvalgrad[1])/2
+#    Gintup = I0+Gvalgradsumup[1+nv*0:(length(Incid)-1)]-dt*(Gvalgradup[1+nv*0:(length(Incid)-1)]+Gvalgradup[1])/2
+#    Gintlow = I0+Gvalgradsumlow[1+nv*0:(length(Incid)-1)]-dt*(Gvalgradlow[1+nv*0:(length(Incid)-1)]+Gvalgradlow[1])/2
     
-    res$RC <- res$RE/(1-res$pred/alpha/N-Gint/N)
-    res$RCup <- res$REup/(1-res$predUNLlow/alpha/N-Gintlow/N)
-    res$RClow <- res$RElow/(1-res$predUNLup/alpha/N-Gintup/N)
+#    res$RC <- res$RE/(1-res$pred/alpha/N-Gint/N)
+#    res$RCup <- res$REup/(1-res$predUNLlow/alpha/N-Gintlow/N)
+#    res$RClow <- res$RElow/(1-res$predUNLup/alpha/N-Gintup/N)
     res$RCfulllow <- RCqntsimfullint[1,]*(1+res$sdtlow/alpha)
     res$RCfullmed <- RCqntsimfullint[2,]*(1+res$sdt/alpha)
     res$RCfullup <-RCqntsimfullint[3,]*(1+res$sdtup/alpha)
+    
+    # so RCfull or REfull is correct output, 
+    # just RC and RE are wrong and coded only for comparison (and commented out).
+    
   }else if(type=='SIS'){
     
     res$REfulllow <- qntsimfullint[1,]
     res$REfullmed <- qntsimfullint[2,]
     res$REfullup <- qntsimfullint[3,]
-    res$RE <- Incid/Fint/gamma
-    res$REup <- Incidup/Fintlow/gamma
-    res$RElow <- Incidlow/Fintup/gamma
+ #   res$RE <- Incid/Fint/gamma
+#    res$REup <- Incidup/Fintlow/gamma
+#    res$RElow <- Incidlow/Fintup/gamma
     
     PrevEst <- Fintboot/(1-(I0*exp(-sum(coef(GAM)[2:7])/7)+Fvalgradbootsum)/N*exp(-gamma*res$time))
     RCqntsimfullint <- apply(PrevEst, 1, quantile, probs=c(0.025,0.5, 0.975))
@@ -611,11 +605,9 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
     res$RCfullmed <- RCqntsimfullint[2,]
     res$RCfullup <- RCqntsimfullint[3,]
     # redundant code
-    res$RC <- res$RE/(1-Fint/N*exp(-gamma*res$time))
-    res$RCup <- res$REup/(1-Fintlow/N*exp(-gamma*res$time))
-    res$RClow <- res$RElow/(1-Fintup/N*exp(-gamma*res$time))
-    
-    #    rhotRC <- rhotRE/(1-Fint*exp(-nt*gamma)/N)
+#    res$RC <- res$RE/(1-Fint/N*exp(-gamma*res$time))
+#    res$RCup <- res$REup/(1-Fintlow/N*exp(-gamma*res$time))
+#    res$RClow <- res$RElow/(1-Fintup/N*exp(-gamma*res$time))
     
   }
   if(EEwindow>0){
@@ -638,6 +630,7 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
     if(plt==TRUE){
     mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)])
     if(EEwindow>0){
+      mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)], datEpiEstRE$Upp[5:(length(datEpiEstRE$Upp)-5)])
       if(simulatorR>0){
         p2 <- ggplot(data=res)+
           annotate("rect", xmin=as.Date(keydates$start),xmax=as.Date(keydates$end),

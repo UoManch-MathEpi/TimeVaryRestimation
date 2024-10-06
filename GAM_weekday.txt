@@ -1,8 +1,8 @@
 Estimate&Std. Error&z value&Pr(>|z|)
-(Intercept)&3.507&0.035&98.841&0
-weekdayMonday&0.381&0.049&7.822&0
-weekdaySaturday&-0.146&0.05&-2.9&0.004
-weekdaySunday&0.551&0.048&11.412&0
-weekdayThursday&0.472&0.048&9.736&0
-weekdayTuesday&0.419&0.048&8.645&0
-weekdayWednesday&0.471&0.048&9.722&0
+(Intercept)&4.207&0.034&124.554&0
+weekdayMonday&0.933&0.046&20.276&0
+weekdaySaturday&-0.039&0.048&-0.818&0.413
+weekdaySunday&0.886&0.046&19.222&0
+weekdayThursday&0.648&0.046&13.997&0
+weekdayTuesday&0.814&0.046&17.662&0
+weekdayWednesday&0.697&0.046&15.081&0

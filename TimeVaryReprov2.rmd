@@ -5,7 +5,7 @@ date: "2024-07-16"
 output: html_document
 ---
 
-This file creates the figures from Pang *et al* 2024 [Pang](https://www.medrxiv.org/content/10.1101/2024.03.26.24304928v1) (subject to random seed). 
+This file creates the figures from Pang *et al* 2024 [Pang](https://www.medrxiv.org/content/10.1101/2024.03.26.24304928v1) (there will be slight differences as different random seeds are used). 
 
 # Setting up 
 
@@ -145,9 +145,12 @@ Now look at case data specifically from care homes
 pcrcut <- pcr[-(1:10),]
 PredictGAM <- gamTVRpred(data=pcrcut, para=c(pcrcut[1,2]*5, 450000, 5, 3), type='SEIR', wrtfile = TRUE)
 ```
-(we drop the first few observations as the numbers are very small and likely unreliable due to testing, this is likely true to varying extents until Sept 2020 when asymptomatic testing was introduced).
+(we drop the first few observations as the numbers are very small and likely unreliable due to testing being limited due to PCR capacity, this is likely true to varying extents until Sept 2020 when asymptomatic testing (and LFD) was introduced).
 
-## Figure 2: Simulation of intervention occuring at different time points 
+## Figure 2: Simulations
+
+Here we simulate 12 different scenarios with different reproduction numbers, dates of intervention and population size, which will produce plots like Figure 2 and panels a, b and c in Figure 4.
+
 ```{r pcrsim, eval=TRUE, warning=FALSE}
 R0 <- c(rep(c(log(4/3)*4, log(4)*4/3, 2*log(2)),2),rep(c(2*log(2)),6))
 SummaryOutput <- data.frame(dates = seq(18353, 18353+365,1)) 
@@ -166,7 +169,7 @@ paste('RC', inc,sep=''), paste('RCup', inc,sep=''), paste('RClow', inc,sep=''))
 
 ## Figure 4
 ```{r}
-# 12 runs
+
 p1 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+121), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+8), color='white', lwd=2)+
@@ -209,7 +212,7 @@ p3 <- ggplot(data=SummaryOutput)+
 print(p1+p2+p3+plot_layout(ncol=2))
 ```
 
-ADD a 4th plot of inference over the intervention.
+Then consider a 4th plot of inference over the intervention.
 
 ```{r}
 SummaryOutputRT <- data.frame(dates = seq(18353, 18353+365/2,1)) 
@@ -262,11 +265,7 @@ print(p4)
 print(p1+p2+p3+p4+plot_layout(ncol=2))
 ```
 
-# Supplementary Material 2: Mortality
-
-Needs coding
-
-# Supplementary Material 3: Sampling
+# Supplementary Material: Sampling
 
 ```{r underreporting}
 R0 <-  2*log(2)
@@ -274,17 +273,15 @@ SummaryOutput <- data.frame(dates = seq(18353, 18353+365,1))
 Inttime <- 1
 pop <-  10^6
     out <- SimulatorTVRSEIRUnderReporting(epipara = c(pop, R0, 5, 3, 10^2, 1), contpara=c(Inttime,0.5), plotgraph = TRUE)
-
-
-
 ```
+
 ```{r}
 p1 <- ggplot(data=out)+
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow1, ymax=RCup1), fill='green', alpha=0.2)+
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow3, ymax=RCup3), fill='blue', alpha=0.2)+#+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow4, ymax=RCup4), fill='grey', alpha=0.2)+#+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow2, ymax=RCup2), fill='red', alpha=0.5)+
-            geom_ribbon(aes(x=as.Date(dates), ymin=RClow62, ymax=RCup62), fill='black', alpha=1)+
+        #    geom_ribbon(aes(x=as.Date(dates), ymin=RClow62, ymax=RCup62), fill='black', alpha=1)+
             labs(x='Date')+ ylab(expression(R[C] ~ estimate))+
   coord_cartesian(ylim=c(0.5,1.6), xlim = c(as.Date(18353),as.Date(18353+365)))#+#+ #  
 p2 <- ggplot(data=out)+
@@ -292,7 +289,7 @@ p2 <- ggplot(data=out)+
             geom_ribbon(aes(x=as.Date(dates), ymin=RElow2, ymax=REup2), fill='red', alpha=0.5)+
             geom_ribbon(aes(x=as.Date(dates), ymin=RElow3, ymax=REup3), fill='blue', alpha=0.2)+#+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RElow4, ymax=REup4), fill='grey', alpha=0.2)+#+ 
-            geom_ribbon(aes(x=as.Date(dates), ymin=RElow62, ymax=REup62), fill='black', alpha=1)+
+         #   geom_ribbon(aes(x=as.Date(dates), ymin=RElow62, ymax=REup62), fill='black', alpha=1)+
             labs(x='Date')+ ylab(expression(R[E] ~ estimate))+
   coord_cartesian(ylim=c(0.5,1.6), xlim = c(as.Date(18353),as.Date(18353+365)))#+#+ #  
 print(p1+p2+plot_layout(ncol=2))
@@ -300,17 +297,24 @@ print(p1+p2+plot_layout(ncol=2))
 
 
 # Supplementary Material: R estimation from Mortality data
+
+Here we show how an the central estimator can be derived from the model.
+
+Firstly simulate some data assuming a disease, COVID-like in terms of duration but with R0= 1.39 and with 10% case fatality ratio (assuming people die at end of infectious period).
+
 ```{r}
 incubation <- 3
 infecitous <- 5
-SimDat <- seir_tau_tv(MaxTime=10*400,dt=1/10, repro=2*log(2),sig=1/incubation, gam= 1/infecitous, N0=10^5, I0=10,E0=0, 
-                       itp=1, frac=1, plt1 = T, plt2 = T )
+SimDat <- seir_tau_tv(MaxTime=10*400,dt=1/10, repro=2*log(2),sig=1/incubation, gam= 1/infecitous,
+                      N0=10^5, I0=10,E0=0, itp=1, frac=1, plt1 = T, plt2 = T )
 SimDeath <- rbinom(400, prob=0.1, size=diff(SimDat$R[seq(1,4001, 10)]))
-PredMort <- gamTVRpred(cbind(18350+1:400, SimDeath))
+PredMort <- gamTVRpred(cbind(18350+1:400, SimDeath), plt=FALSE)
 ```
 
+We now rather than use the internal plotting functions extract the derivatives and estimator of effective reproduction number 
 ```{r}
-PredMort$REdeath <- 1+infecitous*incubation*PredMort$sdt2+infecitous*incubation*PredMort$sdt^2+(incubation+infecitous)*PredMort$sdt
+PredMort$REdeath <- 1+infecitous*incubation*PredMort$sdt2+infecitous*incubation*PredMort$sdt^2+
+  (incubation+infecitous)*PredMort$sdt
 
     p1 <- ggplot(data=PredMort, aes(x=time, y=sdt))+
       geom_line(color='darkblue') +
@@ -328,3 +332,5 @@ PredMort$REdeath <- 1+infecitous*incubation*PredMort$sdt2+infecitous*incubation*
       print(p1+p2+p3+p4+plot_layout(ncol=2))
 
 ```
+
+Derivatives show the expected behaviour of a cubic spline (i.e. piecewise constant at third derivative, piecewise linear for second) and effective R estimate starts at the theoretical value and drops off to 50% (which we would expect).
