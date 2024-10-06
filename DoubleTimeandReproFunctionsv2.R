@@ -610,6 +610,26 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
 #    res$RClow <- res$RElow/(1-Fintup/N*exp(-gamma*res$time))
     
   }
+  ltz <- which(res$RCfulllow<0)
+  if(length(ltz)>0){
+    res$RCfulllow <- ifelse(res$RCfulllow<0, 0, res$RCfulllow)
+    warning("Lower bound of RC is negative as some point and has been set to zero, \n \t this may indicate model mis-specification")
+  }
+  ltz <- which(res$REfulllow<0)
+  if(length(ltz)>0){
+    res$REfulllow <- ifelse(res$REfulllow<0, 0, res$REfulllow)
+    warning("Lower bound of RE is negative as some point and has been set to zero, \n \t this may indicate model mis-specification")
+  }
+  ltz <- which(res$RCfullmed<0)
+  if(length(ltz)>0){
+    res$RCfullmed <- ifelse(res$RCfullmed<0, 0, res$RCfullmed)
+    warning("Median bound of RC is negative as some point and has been set to zero, \n \t this indicates model mis-specification")
+  }
+  ltz <- which(res$REfullmed<0)
+  if(length(ltz)>0){
+    res$REfullmed <- ifelse(res$REfullmed<0, 0, res$REfullmed)
+    warning("Median bound of RE is negative as some point and has been set to zero, \n \t this indicates model mis-specification")
+  }
   if(EEwindow>0){
 #    print('Generate EpiEstim for comparison')
     ee_data=res[,c('Date','vals')]
@@ -630,7 +650,7 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
     if(plt==TRUE){
     mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)])
     if(EEwindow>0){
-      mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)], datEpiEstRE$Upp[5:(length(datEpiEstRE$Upp)-5)])
+      mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)], datEpiEstRE$Upp[3:(length(datEpiEstRE$Upp))])
       if(simulatorR>0){
         p2 <- ggplot(data=res)+
           annotate("rect", xmin=as.Date(keydates$start),xmax=as.Date(keydates$end),
