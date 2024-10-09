@@ -42,7 +42,7 @@ Figure numbers in section titles below refer to figures in Pang et al, 2024. The
 Run model for outbreak data, clearly care homes cannot move and infect another and so the implied transmission arising is due to hidden interaction with community.
 
 ```{r sis, warning=FALSE}
-PredictGAMSIS <- gamTVRpred(data=sis, type='SIS', para=c(sis[1,2]*26/1.5, 14500, 26,0), EEwindow = 0, wrtfile = TRUE)
+PredictGAMSIS <- gamTVRpred(data=sis, type='SIS', para=c(2500, 14500, 26,0), EEwindow = 0, wrtfile = TRUE)
 ```
 
 ## Figure 1: Simulation study
@@ -53,9 +53,9 @@ Run stochastic simulation of SIS to get a sense of variation between simulations
 The function *SimulatorTVRSIS* simulates an outbreak from and SIS model and then returns a estimator of $R_E$ and $R_C$.
 
 ```{r sissim, warning=FALSE}
-outR2 <- SimulatorTVRSIS(epipara = c(14500, 25, 2, 100, 2), plotgraph=TRUE)
-outR12 <- SimulatorTVRSIS(epipara = c(14500, 25, 2, 100, 1.2), contpara=c(1,0.5), plotgraph=TRUE)
-outR15 <- SimulatorTVRSIS(epipara = c(14500, 25, 2, 100, 1.5), plotgraph=TRUE)
+outR2 <- SimulatorTVRSIS(epipara = c(10000, 25, 2, 100, 2), plotgraph=TRUE)
+#outR12 <- SimulatorTVRSIS(epipara = c(14500, 25, 2, 100, 1.2), contpara=c(1,0.5), plotgraph=TRUE)
+#outR15 <- SimulatorTVRSIS(epipara = c(14500, 25, 2, 100, 1.5), plotgraph=TRUE)
 
 ```
 
@@ -90,7 +90,7 @@ p1 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365-20), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
   geom_segment(xend=as.Date(18353+365), x =as.Date(18353+730), y=1, colour='white', lwd=2) +
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow1, ymax=RCup1), fill='blue', alpha=0.2)+
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow2, ymax=RCup2), fill='red', alpha=0.2)+
@@ -102,7 +102,7 @@ p2 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365-20), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
   geom_segment(xend=as.Date(18353+365), x =as.Date(18353+730), y=1, colour='white', lwd=2) +
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow5, ymax=RCup5), fill='blue', alpha=0.2)+
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow6, ymax=RCup6), fill='red', alpha=0.2)+
@@ -113,7 +113,7 @@ p3 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365-20), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
   geom_segment(xend=as.Date(18353+365), x =as.Date(18353+730), y=1, colour='white', lwd=2) +
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow11, ymax=RCup11), fill='blue', alpha=0.2)+
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow12, ymax=RCup12), fill='red', alpha=0.2)+
@@ -124,7 +124,7 @@ p4 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365+20), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365-20), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+365), y=2, colour='white', lwd=2)+
   geom_segment(xend=as.Date(18353+365), x =as.Date(18353+730), y=1, colour='white', lwd=2) +
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow8, ymax=RCup8), fill='blue', alpha=0.2)+
   geom_ribbon(aes(x=as.Date(dates), ymin=RClow3, ymax=RCup3), fill='black', alpha=0.2)+
@@ -143,7 +143,7 @@ p4 <- ggplot(data=SummaryOutput)+
 Now look at case data specifically from care homes 
 ```{r pcr, warning=FALSE}
 pcrcut <- pcr[-(1:10),]
-PredictGAM <- gamTVRpred(data=pcrcut, para=c(pcrcut[1,2]*5, 450000, 5, 3), type='SEIR', wrtfile = TRUE)
+PredictGAM <- gamTVRpred(data=pcrcut, para=c(500, 450000, 5, 3), type='SEIR', wrtfile = TRUE)
 ```
 (we drop the first few observations as the numbers are very small and likely unreliable due to testing being limited due to PCR capacity, this is likely true to varying extents until Sept 2020 when asymptomatic testing (and LFD) was introduced).
 
@@ -173,11 +173,11 @@ paste('RC', inc,sep=''), paste('RCup', inc,sep=''), paste('RClow', inc,sep=''))
 p1 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+121), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+8), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+121), y=R0[3], colour='black')+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+121), y=R0[3], colour='black')+
   geom_segment(xend=as.Date(18353+121+90), x =as.Date(18353+121), y=R0[3]/2, colour='black') +
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+121), y=R0[2], colour='red')+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+121), y=R0[2], colour='red')+
   geom_segment(xend=as.Date(18353+121+90), x =as.Date(18353+121), y=R0[2]/2, colour='red')+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+121), y=R0[1], colour='blue')+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+121), y=R0[1], colour='blue')+
   geom_segment(xend=as.Date(18353+121+90), x =as.Date(18353+121), y=R0[1]/2, colour='blue')+
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow4, ymax=RCup4), fill='blue', alpha=0.2)+#+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow5, ymax=RCup5), fill='red', alpha=0.2)+#+ 
@@ -189,7 +189,7 @@ p2 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+121), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365/4), color='white', lwd=2)+
   geom_vline(xintercept=as.Date(18353+365/2), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+121), y=R0[3], colour='black')+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+121), y=R0[3], colour='black')+
   geom_segment(xend=as.Date(18353+121+90), x =as.Date(18353+121), y=R0[3]/2, colour='black') +
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow8, ymax=RCup8), fill='blue', alpha=0.2)+#+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow7, ymax=RCup7), fill='red', alpha=0.2)+#+ 
@@ -199,7 +199,7 @@ p2 <- ggplot(data=SummaryOutput)+
   coord_cartesian(xlim = c(as.Date(18353),as.Date(18353+213-31)))#+#+ #  
 p3 <- ggplot(data=SummaryOutput)+
   geom_vline(xintercept=as.Date(18353+121), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+121), y=R0[3], colour='black')+
+  geom_segment(x=as.Date(SummaryOutput$dates[1]), xend =as.Date(18353+121), y=R0[3], colour='black')+
   geom_segment(xend=as.Date(18353+121+90), x =as.Date(18353+121), y=R0[3]/2, colour='black') +
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow9, ymax=RCup9), fill='blue', alpha=0.2)+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RClow10, ymax=RCup10), fill='red', alpha=0.2)+ 
@@ -234,9 +234,10 @@ enddate <-  as.Date(offset+duration)
                      diff(cumsum(Sim$Ihat)[1+repTS*(0:floor(dim(Sim)[1]/repTS))]))
 
   for(i in c(seq(0,16,2),20,24, floor(dim(Sim)[1]/repTS)-120)){  
-     tvrout <- gamTVRpred(data=Simdata[1:(120+i),], para=c(Simdata[1,2]*InfP,pop, InfP,IncP), 
-                       keydates = data.frame(start=interventdate, end=min( enddate)), simulatorR=R0,plt=TRUE,
-                       figtitle = paste('Simulation with 50% reduction in R0=',round(R0,2),' on ', interventdate, sep=''))
+    interventdate <- 120
+     tvrout <- gamTVRpred(data=Simdata[1:(interventdate+i),], para=c(Simdata[1,2]*InfP,pop, InfP,IncP), 
+                       keydates = data.frame(start=startdate+interventdate, end=min( enddate)), simulatorR=R0,plt=TRUE,
+                       figtitle = paste('Simulation with 50% reduction in R0=',round(R0,2),' on ', startdate+interventdate, sep=''))
 
   output <- cbind(tvrout$Date, tvrout$REfullmed,tvrout$REfullup,tvrout$REfulllow,tvrout$RCfullmed,tvrout$RCfullup,tvrout$RCfulllow)
 
@@ -250,7 +251,7 @@ paste('RCT', i,sep=''), paste('RCTup', i,sep=''), paste('RCTlow', i,sep=''))
 ```{r}
 p4 <- ggplot(data=SummaryOutputRT)+
   geom_vline(xintercept=as.Date(18353+121), color='white', lwd=2)+
-  geom_segment(x=as.Date(dates[1]), xend =as.Date(18353+121), y=2*log(2), colour='black')+
+  geom_segment(x=as.Date(SummaryOutputRT$dates[1]), xend =as.Date(18353+121), y=2*log(2), colour='black')+
   geom_segment(xend=as.Date(18353+121+90), x =as.Date(18353+121), y=log(2), colour='black') +
             geom_ribbon(aes(x=as.Date(dates), ymin=RCTlow24, ymax=RCTup24), fill='orange', alpha=0.2)+#+ 
             geom_ribbon(aes(x=as.Date(dates), ymin=RCTlow16, ymax=RCTup16), fill='purple', alpha=0.2)+#+ 
@@ -334,3 +335,20 @@ PredMort$REdeath <- 1+infecitous*incubation*PredMort$sdt2+infecitous*incubation*
 ```
 
 Derivatives show the expected behaviour of a cubic spline (i.e. piecewise constant at third derivative, piecewise linear for second) and effective R estimate starts at the theoretical value and drops off to 50% (which we would expect).
+
+
+```{r pcrsim, eval=TRUE, warning=FALSE}
+R0 <- c(rep(c(log(4/3)*4, log(4)*4/3, 2*log(2)),1))
+SummaryOutput <- data.frame(dates = seq(18353, 18353+365,1)) 
+Inttime <- c(rep(1, 3))
+pop <- c(rep(10^5,3))
+for(inc in seq(3,1,-1)){
+    out <- SimulatorTVRSEIR(epipara = c(pop[inc], R0[inc], 5, 3, 10, 1), contpara=c(Inttime[inc],0.5), plotgraph = TRUE)
+    out <- data.frame(out)
+    colnames(out) <- c('dates', paste('RE', inc,sep=''), paste('REup', inc,sep=''), paste('RElow', inc,sep=''), 
+paste('RC', inc,sep=''), paste('RCup', inc,sep=''), paste('RClow', inc,sep=''))
+    SummaryOutput <- Reduce(function(x, y) merge(x, y, all=TRUE), list(SummaryOutput, out))
+  }
+
+
+```

@@ -529,6 +529,7 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
 
   # use the trapesuim rule to approximate integrals 
   # [this is the slow bit if nv is large, or sample size in sampboot large]
+
     Fvalboot <- bootsim[, sampboot]*exp(gamma*(nt))
   Fvalgradboot <-  bootsimfine[,sampboot]*exp(gamma*(ntv)) 
   Fvalgradbootsum <- dt*apply(Fvalgradboot,2,cumsum)[1+nv*0:(length(nt)-1),]-
@@ -564,7 +565,7 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
     Gvalgradboot <-  bootsimfine[,sampboot] #sum(coef(GAM)[2:7])/7+
     Gvalgradbootsum <- dt*apply(Gvalgradboot,2,cumsum)[1+nv*0:(length(nt)-1),]-
       dt/2*(Gvalgradboot[1+nv*0:(length(nt)-1),]+Gvalgradboot[1])
-    Gintboot <- (I0*exp(-sum(coef(GAM)[2:7])/7)+Gvalgradbootsum)
+    Gintboot <- (I0+Gvalgradbootsum*exp(sum(coef(GAM)[2:7])/7))
  #   print(c(dim(Fintboot),dim(bootsim),dim(Gintboot)))
     RCqntsimfullint <- apply(Fintboot/(1-Gvalboot/N/alpha-Gintboot/N), 1, quantile, probs=c(0.025,0.5, 0.975))
     RCqntsimfullint <- ifelse(RCqntsimfullint<0, 0, RCqntsimfullint)
@@ -598,7 +599,7 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
 #    res$REup <- Incidup/Fintlow/gamma
 #    res$RElow <- Incidlow/Fintup/gamma
     
-    PrevEst <- Fintboot/(1-(I0*exp(-sum(coef(GAM)[2:7])/7)+Fvalgradbootsum)/N*exp(-gamma*res$time))
+    PrevEst <- Fintboot/(1-(I0+Fvalgradbootsum*exp(sum(coef(GAM)[2:7])/7))/N*exp(-gamma*res$time))
     RCqntsimfullint <- apply(PrevEst, 1, quantile, probs=c(0.025,0.5, 0.975))
 
     res$RCfulllow <- RCqntsimfullint[1,]
@@ -648,9 +649,9 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
                               Mean =EEcomp$R$'Mean(R)', Low = EEcomp$R$'Quantile.0.025(R)', Upp = EEcomp$R$'Quantile.0.975(R)')
     }
     if(plt==TRUE){
-    mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)])
+    mrc <- max(res$RCfullup[1:(length(res$RCfullup)-5)])
     if(EEwindow>0){
-      mrc <- max(res$RCfullup[5:(length(res$RCfullup)-5)], datEpiEstRE$Upp[3:(length(datEpiEstRE$Upp))])
+      mrc <- max(res$RCfullup[1:(length(res$RCfullup)-5)], datEpiEstRE$Upp[3:(length(datEpiEstRE$Upp))])
       if(simulatorR>0){
         p2 <- ggplot(data=res)+
           annotate("rect", xmin=as.Date(keydates$start),xmax=as.Date(keydates$end),
