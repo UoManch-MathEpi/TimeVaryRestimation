@@ -398,10 +398,11 @@ gamTVRpred <- function(data, pval=5, plt=TRUE, pltgr=FALSE, wrtfile=FALSE, type=
   npts <- length(data[,1]) 
   res<- data.frame(time=data[,1], vals=data[,2]) # set up a new data.frame for results, 
             # this assumes input is a 2 column matrix with first column time points and second column values to be fitted  
-  res$Date=as.Date(res$time,origin = "1969-12-31") # One could set this up to use dates through but...
+  res$Date=as.Date(res$time,origin = "1970-01-01") # One could set this up to use dates through but...
             # ... this is less fiddly with changes to date format in raw data though requires instead input to be have origin of 1st Jan 1970
   res$weekday=weekdays(res$Date)
   #print(mean(data[,2]))
+  #print(head(res$weekday))
   res$time=res$time-min(res$time) # set the time start at 0
   if(type=='SIS'){
     knot=floor(npts/(para[3]+para[4])) # set knots to be 1 generations
